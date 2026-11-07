@@ -9,6 +9,18 @@ body.pattern main{background-image:repeating-linear-gradient(35deg,transparent 0
 .coin{cursor:pointer}.coin .photo{height:156px}.coin .owned-btn{margin:5px 10px 0;width:calc(100% - 20px);background:#37674f;border-color:#67977d;font-weight:700}.coin .owned-btn.active{background:#3d566d}.coin .count{display:none}.coin .qty{font-size:12px;margin:8px 10px;color:#f1ce87}
 body.classic .coin .qty{color:#594520}
 .dialog{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;padding:18px;z-index:100}.dialog.open{display:flex}.dialog-inner{width:min(460px,100%);max-height:90vh;overflow:auto;background:#233347;border:1px solid #74879c;border-radius:18px;padding:20px;color:white}.dialog h2{margin-top:0}.dialog .dialog-image{height:210px;background:#162231;display:flex;align-items:center;justify-content:center;border-radius:12px;overflow:hidden}.dialog-image img{height:100%;max-width:100%;object-fit:contain}.dialog button{margin:4px}.dialog .stepper{display:flex;align-items:center;justify-content:center;gap:15px;margin:18px 0}.dialog .stepper strong{font-size:30px}.dialog .stepper button{min-width:54px}.dialog .close{float:right}.dialog a{color:#9dd4ff}
+</style><style>
+/* Seven rounded sides, closer to a real 50p than the earlier octagonal panels. */
+.stat{clip-path:polygon(50% 0%,88% 10%,100% 43%,81% 86%,50% 100%,19% 86%,0% 43%,12% 10%);border-radius:0;min-height:142px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:18px 7px;font-size:13px}
+.stat strong{font-size:23px}
+.coins{align-items:stretch}
+.coin{display:flex;flex-direction:column;min-width:0;height:100%;padding-bottom:12px}
+.coin .photo{flex:0 0 155px;height:155px}
+.coin h3{min-height:42px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.coin p{line-height:1.35}
+.coin .owned-btn{margin-top:auto;min-height:50px;flex-shrink:0}
+.coin .owned-btn + p{min-height:32px;margin-top:9px;margin-bottom:0}
+.group-title{margin-top:18px}
 </style></head><body>
 <header><h1>🪙 50p Collector</h1><small>Special UK circulating 50p coins · collection tracker</small></header><main><div class="stats"><div class="stat"><strong id="owned">0</strong>Designs owned</div><div class="stat"><strong id="total">0</strong>In catalogue</div><div class="stat"><strong id="pieces">0</strong>Total coins</div></div>
 <input id="search" placeholder="Search designs, themes and years…" aria-label="Search coins"><div class="controls"><select id="filter"><option value="all">All designs</option><option value="owned">Collected</option><option value="missing">Missing</option></select><select id="sort"><option value="year">Year</option><option value="name">Name</option><option value="count">Most owned</option></select></div><div id="status"></div><section id="coins" class="coins"></section>
@@ -126,4 +138,16 @@ loadImage=async function(c,box){await originalLoadImage(c,box);if(box.querySelec
 const appearance=el('appearance'),pattern=el('pattern');appearance.value=localStorage.getItem('50p-theme')||'modern';pattern.checked=localStorage.getItem('50p-pattern')==='yes';
 function applyTheme(){document.body.classList.remove('modern','classic','heritage','pattern');document.body.classList.add(appearance.value);if(pattern.checked)document.body.classList.add('pattern');localStorage.setItem('50p-theme',appearance.value);localStorage.setItem('50p-pattern',pattern.checked?'yes':'no')}
 appearance.onchange=applyTheme;pattern.onchange=applyTheme;el('grouping').onchange=render;applyTheme();render();
+</script><script>
+(function(){
+ const N=7,cx=100,cy=100,r=98,angle=-Math.PI/2;
+ const pts=Array.from({length:N},(_,i)=>({x:cx+r*Math.cos(angle+2*Math.PI*i/N),y:cy+r*Math.sin(angle+2*Math.PI*i/N)}));
+ let d='M '+pts[0].x.toFixed(2)+' '+pts[0].y.toFixed(2);
+ for(let i=0;i<N;i++){const a=pts[i],b=pts[(i+1)%N];const mx=(a.x+b.x)/2,my=(a.y+b.y)/2;const dx=mx-cx,dy=my-cy;const bulge=1.055;d+=' Q '+(cx+dx*bulge).toFixed(2)+' '+(cy+dy*bulge).toFixed(2)+' '+b.x.toFixed(2)+' '+b.y.toFixed(2)}
+ d+=' Z';
+ const svg='<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><path d="'+d+'" fill="black"/></svg>';
+ const encoded='url("data:image/svg+xml,'+encodeURIComponent(svg)+'")';
+ const style=document.createElement('style');style.textContent='.stat{clip-path:none!important;-webkit-mask-image:'+encoded+';mask-image:'+encoded+';-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}';
+ document.head.appendChild(style);
+})();
 </script></body></html>
