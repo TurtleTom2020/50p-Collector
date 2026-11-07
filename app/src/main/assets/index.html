@@ -171,28 +171,44 @@ const mintAliases={
 };
 function cleanMint(s){return (s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}
 function mintTerms(c){return (mintAliases[c.name]||[c.name]).map(cleanMint)}
-function mintImageFromElement(img){const src=img.getAttribute('data-src')||img.getAttribute('data-original')||img.getAttribute('src')||img.getAttribute('srcset')?.split(',')[0]?.trim().split(' ')[0]||'';if(!src||src.startsWith('data:'))return null;try{return new URL(src,'https://www.royalmint.com').href}catch(e){return null}}
+function mintImageFromElement(img){
+ const candidates=[img.getAttribute('data-src'),img.getAttribute('data-lazy-src'),img.getAttribute('data-original'),img.getAttribute('src'),img.getAttribute('srcset')?.split(',')[0]?.trim().split(' ')[0],img.closest('picture')?.querySelector('source')?.getAttribute('srcset')?.split(',')[0]?.trim().split(' ')[0]];
+ for(const src of candidates){if(!src||src.startsWith('data:')||src.includes('placeholder'))continue;try{const url=new URL(src,'https://lifestyle.royalmint.com');if(url.protocol==='https:')return url.href}catch(e){}}
+ return null
+}
 window.onRoyalMintCatalogue=function(html){
  mintLoaded=true;
  if(!html||html.length<1000){el('status').textContent+=' · Royal Mint images unavailable';return}
  const doc=new DOMParser().parseFromString(html,'text/html');
  const imgs=[...doc.querySelectorAll('img')];
  for(const c of coins){
-  const terms=mintTerms(c),year=String(c.year);let best=null,bestScore=-1;
+  const year=String(c.year);
+  const aliases={
+   'Beatrix Potter Anniversary':['beatrix potter 50p coin','beatrix potter'],
+   'Jemima Puddle-Duck':['jemima puddleduck','jemima puddle duck'],
+   'Mrs Tiggy-Winkle':['mrs tiggywinkle','mrs tiggy winkle'],
+   'Tittlemouse':['mrs tittlemouse','tittlemouse'],
+   'Jeremy Fisher':['jeremy fisher'],
+   'Paddington at the Palace':['paddington at buckingham palace','paddington at the palace'],
+   'Paddington at the Tower':['paddington tower of london','paddington at the tower'],
+   'Paddington at St Paul\\'s':['paddington st paul','paddington at st paul']
+  };
+  const terms=(aliases[c.name]||[c.name.replace(/^Olympic /,'')]).map(cleanMint);
+  let best=null,bestScore=-1;
   for(const img of imgs){
    const src=mintImageFromElement(img);if(!src)continue;
    const alt=cleanMint(img.getAttribute('alt')||img.getAttribute('title')||'');
    const row=img.closest('tr');
-   const context=cleanMint((row||img.closest('li,article,figure')||img.parentElement)?.textContent?.slice(0,600)||'');
-   const hay=alt+' '+context;
-   const nameHit=terms.some(term=>hay.includes(term));
-   if(!nameHit)continue;
-   const yearHit=hay.includes(year)||cleanMint(src).includes(year);
-   const score=(yearHit?10:0)+(terms.some(term=>alt.includes(term))?8:3)+(alt.includes('50p')?2:0);
-   if(!yearHit||/logo|banner|hero|icon|placeholder/i.test(src))continue;
-   if(score>bestScore){bestScore=score;best={url:src,source:'https://www.royalmint.com/collect/collector-resources/designs-and-specifications/fifty-pence-coin-designs/',title:img.getAttribute('alt')||c.name+' — The Royal Mint'}}
+   const cellYear=cleanMint(row?.querySelectorAll('td')[1]?.textContent||'');
+   const rowText=cleanMint(row?.textContent||'');
+   const nameMatch=terms.some(t=>alt.includes(t)||rowText.includes(t));
+   if(!nameMatch)continue;
+   if(cellYear!==year && !(alt.includes(year)&&!cellYear))continue;
+   const score=(terms.some(t=>alt.includes(t))?20:5)+(cellYear===year?15:0)+(alt.includes('50p')?3:0);
+   if(/logo|banner|hero|icon|placeholder/i.test(src))continue;
+   if(score>bestScore){bestScore=score;best={url:src,source:'https://lifestyle.royalmint.com/collect/collector-resources/designs-and-specifications/fifty-pence-coin-designs/',title:img.getAttribute('alt')||c.name+' — The Royal Mint'}}
   }
-  if(best&&bestScore>=13)mintImages[c.id]=best;
+  if(best&&bestScore>=20)mintImages[c.id]=best;
  }
  for(const c of coins){const item=mintImages[c.id];if(!item)continue;const card=[...document.querySelectorAll('.coin')].find(e=>e.dataset.coinId===c.id);if(card){cache[c.id]=item;showImage(card.querySelector('.photo'),item)}}
  render();el('status').textContent=coins.length+' designs · Royal Mint image matches: '+Object.keys(mintImages).length;
