@@ -25,7 +25,7 @@ public class MainActivity extends Activity {
   web.addJavascriptInterface(new ImageBridge(),"CoinImages");
   web.loadUrl("file:///android_asset/index.html");
  }
- public class ImageBridge {
+ public class ImageBridge {\n  @JavascriptInterface public void royalMintCatalogue(){\n   pool.execute(()->{String result="";HttpURLConnection connection=null;try{\n    connection=(HttpURLConnection)new URL("https://www.royalmint.com/collect/collector-resources/designs-and-specifications/fifty-pence-coin-designs/").openConnection();\n    connection.setRequestProperty("User-Agent","Mozilla/5.0 (Android; 50p Collector personal reference)");\n    connection.setConnectTimeout(12000);connection.setReadTimeout(15000);\n    try(InputStream in=connection.getInputStream();ByteArrayOutputStream out=new ByteArrayOutputStream()){byte[] buf=new byte[16384];int n;while((n=in.read(buf))!=-1&&out.size()<2500000)out.write(buf,0,n);result=out.toString("UTF-8");}\n   }catch(Exception e){}finally{if(connection!=null)connection.disconnect();}\n   final String html=result;runOnUiThread(()->{if(web!=null)web.evaluateJavascript("window.onRoyalMintCatalogue("+JSONObject.quote(html)+")",null);});\n   });\n  }
   @JavascriptInterface public void search(final String id,final String query){
    if(id==null||query==null||id.length()>150||query.length()>180)return;
    pool.execute(()->{
