@@ -167,7 +167,7 @@ const mintAliases={
 'Mrs Tiggy-Winkle':['mrs tiggywinkle','mrs tiggy-winkle'],
 'Jeremy Fisher':['jeremy fisher'],
 'Tittlemouse':['tittlemouse'],
-   "Paddington at St Paul's":['paddington st paul','paddington at st paul']
+   "Paddington at St Paul's":['paddington st paul','paddington at st paul'],
 };
 function cleanMint(s){return (s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}
 function mintTerms(c){return (mintAliases[c.name]||[c.name]).map(cleanMint)}
@@ -191,7 +191,7 @@ window.onRoyalMintCatalogue=function(html){
    'Jeremy Fisher':['jeremy fisher'],
    'Paddington at the Palace':['paddington at buckingham palace','paddington at the palace'],
    'Paddington at the Tower':['paddington tower of london','paddington at the tower'],
-   'Paddington at St Paul\\'s':['paddington st paul','paddington at st paul']
+   "Paddington at St Paul's":['paddington st paul','paddington at st paul'],
   };
   const terms=(aliases[c.name]||[c.name.replace(/^Olympic /,'')]).map(cleanMint);
   let best=null,bestScore=-1;
