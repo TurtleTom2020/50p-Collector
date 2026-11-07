@@ -28,7 +28,7 @@ public class MainActivity extends Activity {
  public class ImageBridge {
   @JavascriptInterface public void royalMintCatalogue(){
    pool.execute(()->{String result="";HttpURLConnection connection=null;try{
-    connection=(HttpURLConnection)new URL("https://www.royalmint.com/collect/collector-resources/designs-and-specifications/fifty-pence-coin-designs/").openConnection();
+    connection=(HttpURLConnection)new URL("https://lifestyle.royalmint.com/collect/collector-resources/designs-and-specifications/fifty-pence-coin-designs/").openConnection();
     connection.setRequestProperty("User-Agent","Mozilla/5.0 (Android; 50p Collector personal reference)");
     connection.setConnectTimeout(12000);connection.setReadTimeout(15000);
     try(InputStream in=connection.getInputStream();ByteArrayOutputStream out=new ByteArrayOutputStream()){byte[] buf=new byte[16384];int n;while((n=in.read(buf))!=-1&&out.size()<2500000)out.write(buf,0,n);result=out.toString("UTF-8");}
