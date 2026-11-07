@@ -163,4 +163,43 @@ appearance.onchange=applyTheme;pattern.onchange=applyTheme;el('grouping').onchan
  const style=document.createElement('style');style.textContent='.stat{clip-path:none!important;-webkit-mask-image:'+encoded+';mask-image:'+encoded+';-webkit-mask-size:100% 100%;mask-size:100% 100%;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}';
  document.head.appendChild(style);
 })();
+</script><script>
+/* Royal Mint catalogue image mapping: only show a candidate when the coin's name/year match the image or its immediate catalogue row. */
+const mintImages={};let mintLoaded=false;
+const mintAliases={
+'Beatrix Potter Anniversary':['beatrix potter 50p','beatrix potter anniversary'],
+'Jemima Puddle-Duck':['jemima puddleduck','jemima puddle-duck'],
+'Mrs Tiggy-Winkle':['mrs tiggywinkle','mrs tiggy-winkle'],
+'Jeremy Fisher':['jeremy fisher'],
+'Tittlemouse':['tittlemouse'],
+'Paddington at St Paul\'s':['paddington st pauls','paddington st paul']
+};
+function cleanMint(s){return (s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim()}
+function mintTerms(c){return (mintAliases[c.name]||[c.name]).map(cleanMint)}
+function mintImageFromElement(img){const src=img.getAttribute('data-src')||img.getAttribute('data-original')||img.getAttribute('src')||img.getAttribute('srcset')?.split(',')[0]?.trim().split(' ')[0]||'';if(!src||src.startsWith('data:'))return null;try{return new URL(src,'https://www.royalmint.com').href}catch(e){return null}}
+window.onRoyalMintCatalogue=function(html){
+ mintLoaded=true;
+ if(!html||html.length<1000){el('status').textContent+=' · Royal Mint images unavailable';return}
+ const doc=new DOMParser().parseFromString(html,'text/html');
+ const imgs=[...doc.querySelectorAll('img')];
+ for(const c of coins){const terms=mintTerms(c);let best=null,bestScore=-1;
+  for(const img of imgs){const src=mintImageFromElement(img);if(!src)continue;
+   const alt=cleanMint(img.getAttribute('alt')||img.getAttribute('title')||'');
+   const parent=cleanMint((img.closest('tr,li,article,figure')||img.parentElement)?.textContent?.slice(0,350)||'');
+   const context=alt+' '+parent;
+   let score=0;for(const term of terms){if(alt.includes(term))score=Math.max(score,12);else if(parent.includes(term))score=Math.max(score,8)}
+   if(!score)continue;
+   if(context.includes(String(c.year)))score+=3;
+   if(alt.includes('50p')||alt.includes('coin'))score+=2;
+   if(/logo|banner|hero|icon|placeholder/i.test(src))score-=20;
+   if(score>bestScore){best={url:src,source:'https://www.royalmint.com/collect/collector-resources/designs-and-specifications/fifty-pence-coin-designs/',title:img.getAttribute('alt')||c.name+' — The Royal Mint'};bestScore=score}
+  }
+  if(best&&bestScore>=10)mintImages[c.id]=best;
+ }
+ for(const c of coins){const item=mintImages[c.id];if(!item)continue;const card=[...document.querySelectorAll('.coin')].find(e=>e.dataset.coinId===c.id);if(card){cache[c.id]=item;showImage(card.querySelector('.photo'),item)}}
+ el('status').textContent=coins.length+' designs · Royal Mint image matches: '+Object.keys(mintImages).length;
+};
+const previousLoadImage=loadImage;
+loadImage=function(c,box){if(mintImages[c.id]){cache[c.id]=mintImages[c.id];showImage(box,mintImages[c.id]);return}previousLoadImage(c,box)};
+if(window.CoinImages&&typeof window.CoinImages.royalMintCatalogue==='function')window.CoinImages.royalMintCatalogue();
 </script></body></html>
